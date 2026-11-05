@@ -1,0 +1,22 @@
+src/
+├── main.ts                        Phaser game config
+├── core/
+│   └── ecs/
+│       ├── types.ts               ComponentType, System, Entity
+│       └── world.ts               World: entities, stores, queries, systems
+├── game/
+│   ├── config.ts                  All tunable constants
+│   ├── components.ts              ECS component definitions
+│   ├── input/
+│   │   └── CameraController.ts    Pan / zoom / tap gestures
+│   ├── world/
+│   │   ├── TileWorld.ts           Chunked tile storage
+│   │   ├── ChunkManager.ts        Chunk Graphics rendering
+│   │   ├── Connectivity.ts        Union-find over tiles
+│   │   ├── Classifier.ts          Cluster → ModuleType
+│   │   └── ModuleRegistry.ts      Stats → ECS entities
+│   ├── systems/
+│   │   └── ModuleRenderSystem.ts  Draws module bounding circles
+│   └── scenes/
+│       └── GameScene.ts           Wires it all together
+└── index.html

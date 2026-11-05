@@ -11,3 +11,17 @@ rootbound.zip
 .DS_Store
 Thumbs.db
 *.log
+
+screenshots/
+
+*.pid
+
+.agents/
+
+.agentsweb/
+
+.omgithub-runtime/
+
+.opencode-ssh/
+
+.opencode-web/

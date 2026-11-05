@@ -3,45 +3,167 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1a1510" />
+    <meta name="theme-color" content="#101812" />
     <meta
       name="description"
-      content="Rootbound — a tile-assembly world-building game with emergent consequences."
+      content="Rootbound — grow a living garden, manage pressure, and defend its heart."
     />
     <title>Rootbound</title>
     <style>
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background: #1a1510;
-        touch-action: none;
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #e8e2cd;
+        --panel: rgb(20 28 21 / 91%);
+        --panel-border: rgb(196 176 122 / 25%);
+        --muted: #a7aa91;
+        --gold: #e2c47e;
+        --green: #94bb83;
       }
 
-      #app {
-        width: 100vw;
-        height: 100vh;
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #101812; touch-action: none; }
+      button { font: inherit; }
+      #app { position: fixed; inset: 0; }
+      #game-ui { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+      .panel { border: 1px solid var(--panel-border); border-radius: 12px; background: var(--panel); box-shadow: 0 12px 36px rgb(0 0 0 / 24%); backdrop-filter: blur(12px); }
+      .topbar { position: absolute; top: 16px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+      .brand { display: flex; align-items: center; gap: 11px; padding: 11px 15px; }
+      .brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; background: #293a2b; color: var(--green); font-size: 21px; }
+      .brand-name { color: #f0e8d2; font-family: Georgia, "Times New Roman", serif; font-size: 19px; letter-spacing: .04em; }
+      .brand-subtitle { margin-top: 2px; color: var(--muted); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+      .status { max-width: 310px; padding: 12px 16px; color: #d6d1bc; font-size: 12px; text-align: right; }
+      .status::before { content: ""; display: inline-block; width: 7px; height: 7px; margin: 0 8px 1px 0; border-radius: 50%; background: #96bd79; box-shadow: 0 0 10px #96bd79; }
+      .side-panel { position: absolute; top: 83px; right: 16px; width: 228px; padding: 15px; }
+      .eyebrow { color: #c3ad72; font-size: 9px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+      .objective-title { margin: 6px 0 12px; color: #f0e8d2; font-family: Georgia, "Times New Roman", serif; font-size: 19px; font-weight: 500; }
+      .stat { margin-top: 12px; }
+      .stat-row { display: flex; justify-content: space-between; gap: 10px; color: #b7b9a4; font-size: 11px; }
+      .stat-row strong { color: #eee7d3; font-size: 12px; font-weight: 650; }
+      .meter { height: 5px; margin-top: 7px; overflow: hidden; border-radius: 6px; background: #384037; }
+      .meter > span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7ea86d, #c2cf82); transition: width .25s ease; }
+      #pressure-bar { background: linear-gradient(90deg, #bd8d50, #d95742); }
+      .module-count { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgb(196 176 122 / 15%); color: var(--muted); font-size: 10px; line-height: 1.55; }
+      .module-count strong { display: block; margin-bottom: 4px; color: #e6dfc9; font-size: 11px; }
+      .palette { position: absolute; bottom: 17px; left: 50%; display: flex; align-items: stretch; gap: 7px; padding: 9px; transform: translateX(-50%); pointer-events: auto; }
+      .tile-button { display: flex; min-width: 83px; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: #b9bba8; cursor: pointer; text-align: left; transition: background .15s, border-color .15s, color .15s, transform .15s; }
+      .tile-button:hover { transform: translateY(-2px); background: rgb(255 255 255 / 5%); color: #f2ecd9; }
+      .tile-button.selected { border-color: rgb(226 196 126 / 55%); background: rgb(226 196 126 / 12%); color: #f4e4b7; }
+      .tile-icon { display: grid; width: 29px; height: 29px; flex: 0 0 29px; place-items: center; border: 1px solid rgb(255 255 255 / 12%); border-radius: 8px; background: #344135; color: #d4d7b4; font-size: 15px; }
+      [data-tile="leaf"] .tile-icon { background: #344937; color: #a5ca8d; }
+      [data-tile="root"] .tile-icon { background: #493729; color: #d3a66d; }
+      [data-tile="bloom"] .tile-icon { background: #4a3c39; color: #e5a078; }
+      [data-tile="glyph"] .tile-icon { background: #3d3d4d; color: #b6addd; }
+      .tile-label { display: block; font-size: 11px; font-weight: 650; }
+      .tile-cost { display: block; margin-top: 2px; color: #a4a58f; font-size: 9px; }
+      .selection-card { position: absolute; bottom: 83px; left: 50%; width: min(390px, calc(100vw - 32px)); padding: 12px 15px; transform: translateX(-50%); text-align: center; }
+      #selected-name { color: #f2e7ca; font-family: Georgia, "Times New Roman", serif; font-size: 16px; }
+      #selected-detail { margin-top: 4px; color: #b4b6a2; font-size: 11px; line-height: 1.4; }
+      #selected-cost { margin-top: 5px; color: #d8c17f; font-size: 10px; font-weight: 650; }
+      .help { position: absolute; bottom: 19px; left: 17px; max-width: 235px; padding: 10px 12px; color: #b4b6a2; font-size: 10px; line-height: 1.6; }
+      .help strong { color: #e5dfcb; }
+      .restart { position: absolute; top: 17px; right: 50%; padding: 7px 10px; border: 1px solid var(--panel-border); border-radius: 8px; background: var(--panel); color: #c8c3b0; cursor: pointer; font-size: 10px; pointer-events: auto; transform: translateX(50%); }
+      .restart:hover { border-color: #b69c61; color: #f1dfb1; }
+      #toast { position: absolute; top: 78px; left: 50%; padding: 10px 15px; border: 1px solid rgb(226 196 126 / 36%); border-radius: 9px; background: rgb(25 31 23 / 94%); color: #f0dfb0; font-size: 12px; opacity: 0; pointer-events: none; transform: translate(-50%, -5px); transition: opacity .2s, transform .2s; white-space: nowrap; }
+      #toast.visible { opacity: 1; transform: translate(-50%, 0); }
+      #end-screen { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 20px; background: rgb(8 13 9 / 74%); backdrop-filter: blur(8px); }
+      #end-screen[hidden] { display: none; }
+      .end-card { width: min(440px, 100%); padding: 32px; border: 1px solid rgb(226 196 126 / 36%); border-radius: 18px; background: #18221a; box-shadow: 0 24px 80px rgb(0 0 0 / 45%); text-align: center; }
+      .end-symbol { margin-bottom: 12px; color: #c8ad68; font-size: 31px; }
+      #end-title { margin: 0; color: #f0e6cd; font-family: Georgia, "Times New Roman", serif; font-size: 30px; font-weight: 500; }
+      #end-copy { margin: 12px 0 22px; color: #b8b9a7; font-size: 13px; line-height: 1.6; }
+      #play-again { padding: 11px 20px; border: 0; border-radius: 9px; background: #c5aa69; color: #1a2017; cursor: pointer; font-size: 12px; font-weight: 750; }
+      #play-again:hover { background: #dfc47e; }
+      @media (max-width: 760px) {
+        .topbar { top: 9px; left: 9px; right: 9px; }
+        .brand { padding: 8px 10px; }
+        .brand-mark { width: 30px; height: 30px; }
+        .brand-name { font-size: 16px; }
+        .brand-subtitle { font-size: 8px; }
+        .status { max-width: 175px; padding: 10px; font-size: 10px; }
+        .side-panel { top: 65px; right: 9px; width: 184px; padding: 11px; }
+        .objective-title { font-size: 16px; margin-bottom: 8px; }
+        .stat { margin-top: 9px; }
+        .module-count { margin-top: 10px; padding-top: 8px; }
+        .restart { top: 67px; right: auto; left: 9px; transform: none; }
+        .help { bottom: 81px; left: 9px; width: 145px; padding: 8px; font-size: 9px; }
+        .palette { bottom: 8px; left: 8px; right: 8px; justify-content: center; gap: 2px; padding: 5px; transform: none; }
+        .tile-button { min-width: 0; flex: 1; justify-content: center; gap: 5px; padding: 7px 4px; }
+        .tile-icon { width: 25px; height: 25px; flex-basis: 25px; }
+        .tile-label { font-size: 10px; }
+        .tile-cost { font-size: 8px; }
+        .selection-card { bottom: 58px; width: min(340px, calc(100vw - 18px)); padding: 8px 10px; }
+        #selected-detail { font-size: 10px; }
+        #toast { top: 62px; max-width: calc(100vw - 24px); overflow: hidden; text-overflow: ellipsis; }
       }
-
-      #hud {
-        position: fixed;
-        top: 8px;
-        left: 8px;
-        z-index: 100;
-        padding: 4px 8px;
-        border-radius: 4px;
-        background: rgb(0 0 0 / 50%);
-        color: #aaa;
-        font-family: monospace;
-        font-size: 12px;
-        pointer-events: none;
+      @media (max-width: 420px) {
+        .brand-subtitle { display: none; }
+        .brand { gap: 7px; }
+        .status { max-width: 150px; font-size: 9px; }
+        .side-panel { width: 164px; }
+        .help { width: 125px; }
+        .tile-button { flex-direction: column; gap: 3px; }
+        .tile-copy { text-align: center; }
       }
     </style>
   </head>
   <body>
     <div id="app"></div>
-    <div id="hud" aria-live="off"></div>
+    <main id="game-ui" aria-label="Rootbound game interface">
+      <header class="topbar">
+        <div class="brand panel">
+          <div class="brand-mark" aria-hidden="true">❧</div>
+          <div><div class="brand-name">Rootbound</div><div class="brand-subtitle">A garden at the edge of wild</div></div>
+        </div>
+        <div id="status-line" class="status panel" aria-live="polite">The wild is watching</div>
+      </header>
+
+      <button id="restart" class="restart" type="button" title="Start a fresh garden">↻ &nbsp;Restart</button>
+
+      <aside class="side-panel panel" aria-label="Garden status">
+        <div class="eyebrow">Your purpose</div>
+        <h1 class="objective-title">Guard the heart</h1>
+        <div class="stat">
+          <div class="stat-row"><span>Biomass</span><strong id="biomass-value">12</strong></div>
+        </div>
+        <div class="stat">
+          <div class="stat-row"><span>Heart</span><strong id="core-value">6 / 6</strong></div>
+          <div class="meter"><span id="core-bar"></span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-row"><span>Wild pressure</span><strong id="pressure-value">0</strong></div>
+          <div class="meter"><span id="pressure-bar"></span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-row"><span>Waves turned</span><strong id="wave-value">0 / 5</strong></div>
+        </div>
+        <div class="module-count"><strong>Living forms · <span id="tile-value">1</span> tiles</strong><span id="module-value">0 canopy · 0 taproot · 0 wound</span></div>
+      </aside>
+
+      <div class="help panel"><strong>Grow outward</strong><br />Tap a neighboring tile to plant. Drag to explore · pinch or scroll to zoom.<br /><strong>1–5</strong> selects a seed · <strong>Shift</strong> raises it.</div>
+      <div id="toast" role="status" aria-live="polite"></div>
+      <section class="selection-card panel" aria-live="polite">
+        <div id="selected-name">Stem</div>
+        <div id="selected-detail">The backbone of a living cluster. Pair with leaves to grow a trunk.</div>
+        <div id="selected-cost">1 biomass</div>
+      </section>
+      <nav class="palette panel" aria-label="Choose a tile to plant">
+        <button class="tile-button selected" data-tile="stem" type="button" aria-label="Select stem, costs 1 biomass"><span class="tile-icon" aria-hidden="true">│</span><span class="tile-copy"><span class="tile-label">Stem</span><span class="tile-cost">1 biomass</span></span></button>
+        <button class="tile-button" data-tile="leaf" type="button" aria-label="Select leaf, costs 1 biomass"><span class="tile-icon" aria-hidden="true">❧</span><span class="tile-copy"><span class="tile-label">Leaf</span><span class="tile-cost">1 biomass</span></span></button>
+        <button class="tile-button" data-tile="root" type="button" aria-label="Select root, costs 2 biomass"><span class="tile-icon" aria-hidden="true">⌁</span><span class="tile-copy"><span class="tile-label">Root</span><span class="tile-cost">2 biomass</span></span></button>
+        <button class="tile-button" data-tile="bloom" type="button" aria-label="Select bloom, costs 2 biomass"><span class="tile-icon" aria-hidden="true">✿</span><span class="tile-copy"><span class="tile-label">Bloom</span><span class="tile-cost">2 biomass</span></span></button>
+        <button class="tile-button" data-tile="glyph" type="button" aria-label="Select glyph, costs 4 biomass"><span class="tile-icon" aria-hidden="true">✧</span><span class="tile-copy"><span class="tile-label">Glyph</span><span class="tile-cost">4 biomass</span></span></button>
+      </nav>
+    </main>
+
+    <section id="end-screen" hidden aria-modal="true" role="dialog" aria-labelledby="end-title">
+      <div class="end-card">
+        <div class="end-symbol" aria-hidden="true">✦</div>
+        <h2 id="end-title">The heart endures</h2>
+        <p id="end-copy">The living garden held fast.</p>
+        <button id="play-again" type="button">Grow another garden</button>
+      </div>
+    </section>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

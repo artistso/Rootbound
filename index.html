@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1a1510" />
+    <meta
+      name="description"
+      content="Rootbound — a tile-assembly world-building game with emergent consequences."
+    />
+    <title>Rootbound</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #1a1510;
+        touch-action: none;
+      }
+
+      #app {
+        width: 100vw;
+        height: 100vh;
+      }
+
+      #hud {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        z-index: 100;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: rgb(0 0 0 / 50%);
+        color: #aaa;
+        font-family: monospace;
+        font-size: 12px;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="hud" aria-live="off"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

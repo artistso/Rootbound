@@ -1,0 +1,28 @@
+{
+  "name": "rootbound",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A tile-assembly world-building game with an emergent defense layer.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test && vite build",
+    "package:itch": "bash scripts/package-itch.sh"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2",
+    "vitest": "^5.1.0"
+  }
+}

@@ -36,4 +36,22 @@ jobs:
       - name: Test Rust engine
         # ubuntu-latest runners ship a stable Rust toolchain; the engine is
         # zero-dependency, so no install or cache step is needed.
-        run: cargo test --workspace --all-targets
+        # On failure, surface the first compiler/test errors as workflow
+        # annotations (readable via the annotations API) and fail honestly.
+        run: |
+          set +e
+          cargo test --workspace --all-targets > /tmp/engine-test.log 2>&1
+          code=$?
+          echo "cargo test exit code: $code"
+          grep -E "^error" /tmp/engine-test.log | head -8 | while IFS= read -r line; do
+            echo "::error::$line"
+          done
+          grep -B1 -A10 -m1 -E "^error" /tmp/engine-test.log | sed 's/[^a-zA-Z0-9_:.,=(){}"'"'"' [-]/ /g' | head -22 | while IFS= read -r line; do
+            echo "::error::$line"
+          done
+          if [ $code -ne 0 ]; then
+            grep -E "test result|panicked|FAILED|failed" /tmp/engine-test.log | head -8 | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+          fi
+          exit $code

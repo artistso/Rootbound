@@ -75,6 +75,7 @@ fn component_tiles_lists_every_member() {
     connectivity.add(coord(0, 0), TileType::Stem);
     connectivity.add(coord(1, 0), TileType::Stem);
     connectivity.add(coord(50, 50), TileType::Leaf);
+    connectivity.union(coord(0, 0), coord(1, 0));
 
     let mut members = connectivity.component_tiles(coord(0, 0));
     members.sort();

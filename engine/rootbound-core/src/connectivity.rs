@@ -71,19 +71,19 @@ impl Connectivity {
     /// key when no parent entry exists.
     pub fn find(&mut self, coord: TileCoord) -> TileCoord {
         let mut root = coord;
-        while let Some(next) = self.parent.get(&root) {
-            if *next == root {
+        while let Some(&next) = self.parent.get(&root) {
+            if next == root {
                 break;
             }
-            root = *next;
+            root = next;
         }
         let mut cursor = coord;
-        while let Some(next) = self.parent.get(&cursor) {
-            if *next == cursor || *next == root {
+        while let Some(&next) = self.parent.get(&cursor) {
+            if next == cursor || next == root {
                 break;
             }
             self.parent.insert(cursor, root);
-            cursor = *next;
+            cursor = next;
         }
         root
     }
@@ -93,11 +93,11 @@ impl Connectivity {
     /// factor the compressing [`Connectivity::find`] provides.
     fn root_of(&self, coord: TileCoord) -> TileCoord {
         let mut root = coord;
-        while let Some(next) = self.parent.get(&root) {
-            if *next == root {
+        while let Some(&next) = self.parent.get(&root) {
+            if next == root {
                 break;
             }
-            root = *next;
+            root = next;
         }
         root
     }

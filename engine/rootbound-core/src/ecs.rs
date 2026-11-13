@@ -76,7 +76,7 @@ impl World {
     }
 
     pub fn destroy(&mut self, entity: Entity) {
-        if self.entities.remove(&entity).is_none() {
+        if !self.entities.remove(&entity) {
             return;
         }
         for store in self.stores.values_mut() {

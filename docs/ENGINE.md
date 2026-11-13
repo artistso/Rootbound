@@ -62,9 +62,12 @@ as its own project. Do not let them leak into the client engine.
 `rootbound-core` builds with **no dependencies**. Any proposed addition must
 either (a) be unavailable in the standard library in a way that materially
 impedes correctness (e.g. `serde` once a save/interchange format lands,
-`wasm-bindgen` once the web bridge lands, `bevy` or similar once the rewrite
-gets a frontend), and (b) be verifiable against crates.io at the time it is
-added, pinned in `Cargo.lock`, and justified in this document.
+`bevy` or similar once the rewrite gets a frontend), and (b) be verifiable
+against crates.io at the time it is added, pinned in `Cargo.lock`, and
+justified in this document. One exception exists today: `rootbound-wasm`
+depends on `wasm-bindgen = "=0.2.100"` (exact pin) because that crate cannot
+exist without the wasm glue, and the exact version is pinned in the CI CLI
+install so the crate and generator cannot drift apart.
 
 ## Verification status
 
@@ -76,7 +79,11 @@ membership), and the branch is now **green on both jobs** — `cargo test
 --workspace --all-targets` passes on `ubuntu-latest` with the runner's
 stable toolchain (run 43443964896, commits `4afd514`..`9d3e53a`). The same
 job runs on every PR and on pushes to `main`, so regressions gate the same
-way the TypeScript `check` job does.
+way the TypeScript `check` job does. A third job, `wasm`, builds
+`rootbound-wasm` to `wasm32-unknown-unknown`, generates JS bindings with the
+pinned `wasm-bindgen` CLI, and runs `rootbound-wasm/smoke.mjs` under node —
+placement validation, connectivity-driven module emergence, pressure, and
+threat peaks, end to end.
 
 Local workflow once you have a toolchain:
 
@@ -90,9 +97,9 @@ cargo test --workspace --all-targets
 ```text
 engine/
 ├── Cargo.toml                  # workspace (resolver 2)
-└── rootbound-core/             # zero-dependency simulation core
-    ├── Cargo.toml
-    ├── src/
+├── rootbound-core/             # zero-dependency simulation core
+│   ├── Cargo.toml
+│   ├── src/
     │   ├── lib.rs              # crate docs + shared constants (TILE_PX, CHUNK_SIZE, WORLD_SIZE, …)
     │   ├── types.rs            # TileCoord, Vec2, TileType, ModuleType, Tile
     │   ├── tile_world.rs       # chunked tile storage (port of TileWorld.ts)
@@ -103,6 +110,10 @@ engine/
     │   ├── registry.rs         # module <-> ECS synchronization (port of ModuleRegistry.ts)
     │   └── pressure.rs         # M2 pressure propagation (new)
     └── tests/                  # integration tests mirroring tests/*.test.ts + pressure.rs
+└── rootbound-wasm/             # JS-callable bindings (wasm-bindgen), the web bridge
+    ├── Cargo.toml              # cdylib; wasm-bindgen pinned exactly
+    ├── src/lib.rs              # Engine: place_tile / tile_count / darkness_at / …
+    └── smoke.mjs               # node end-to-end assertions, run in CI after wasm-bindgen
 ```
 
 ### Port fidelity notes (intentional divergences from TypeScript)
@@ -127,6 +138,45 @@ engine/
   JSON bridge (saves, TS interop) stays trivial.
 * `ModuleRegistry` exposes its `Component<Module>`/`Component<Transform>`
   handles so callers can query the ECS world without holding duplicates.
+
+## WASM bridge (`rootbound-wasm`)
+
+`rootbound-wasm` exposes the whole placement pipeline as one JS-callable
+`Engine` object, mirroring `GameScene.commitTile`: `place_tile(gx, gy,
+"root", 0)` validates input, writes the world, re-merges union-find
+connectivity, re-classifies and syncs modules, and registers the pressure
+source. Validation mirrors the game too — out-of-bounds, occupied cells, and
+unknown tile types return `false` instead of throwing.
+
+```js
+const engine = new Engine();
+engine.place_tile(0, 0, 'root', 0);
+engine.darkness_at(0, 0);   // 0..1 pressure visualization value
+engine.max_pressure();      // peak pressure on the field
+engine.threat_peaks_json(); // [{"x":1.5,"y":0.0,"max":31.7,"cells":5}]
+engine.module_types_json(); // ["taproot"]
+```
+
+The API is scalar-only (numbers/booleans/small JSON strings with number and
+enum content), so no serde is involved and the generated `.d.ts` stays
+trivial. The generated `pkg/` is **not** committed — it is emitted by CI and
+must be produced locally with:
+
+```bash
+cd engine
+rustup target add wasm32-unknown-unknown
+cargo build --release --target wasm32-unknown-unknown -p rootbound-wasm
+cargo install wasm-bindgen-cli --locked --version "=0.2.100"
+wasm-bindgen --target nodejs --out-dir rootbound-wasm/pkg \
+  target/wasm32-unknown-unknown/release/rootbound_wasm.wasm
+node rootbound-wasm/smoke.mjs
+```
+
+**Not wired into the web game yet.** The Phaser build remains all-TypeScript;
+integrating `pkg/` into Vite (loading path, `.d.ts` types, replacing or
+backing up `GameScene`'s simulation calls, and rendering `darkness_at()` as
+ground color) is the next milestone and should land with in-game visual
+verification, which cannot be done blind in this environment.
 
 ## M2 pressure model
 

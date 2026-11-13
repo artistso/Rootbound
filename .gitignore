@@ -2,6 +2,7 @@ node_modules/
 dist/
 coverage/
 engine/target/
+engine/rootbound-wasm/pkg/
 rootbound.zip
 
 .env

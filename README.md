@@ -36,6 +36,17 @@ npm run preview
 
 The debug HUD shows the current zoom, tile count, and selected tile type.
 
+## Rust engine (experimental)
+
+There is a new, zero-dependency Rust engine in `engine/` — the seed of the
+full Rust rewrite. It currently ports the world core (chunked tile storage,
+8-connected union-find connectivity, module classification, the ECS, and the
+module registry) and implements the M2 pressure model (visible pressure
+propagation with threat-peak detection for M3). It is **not yet wired into the
+web build**; the Phaser game remains the playable and shippable artifact. The
+engine is tested in CI (`cargo test`). See [docs/ENGINE.md](docs/ENGINE.md)
+for architecture, verification status, and the dependency policy.
+
 ## Development commands
 
 | Command | Purpose |

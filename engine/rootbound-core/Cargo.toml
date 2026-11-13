@@ -1,0 +1,10 @@
+[package]
+name = "rootbound-core"
+version = "0.1.0"
+edition.workspace = true
+repository.workspace = true
+description = "Headless Rust simulation core for Rootbound — tile world, connectivity, module classification, and pressure propagation."
+
+# Dependency policy: none. This crate must build offline and in minimal CI.
+# Any proposed dependency needs justification in docs/ENGINE.md before it lands.
+[dependencies]

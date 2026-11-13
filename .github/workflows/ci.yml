@@ -24,3 +24,16 @@ jobs:
         run: npm ci
       - name: Check types, tests, and production build
         run: npm run check
+
+  engine:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Test Rust engine
+        # ubuntu-latest runners ship a stable Rust toolchain; the engine is
+        # zero-dependency, so no install or cache step is needed.
+        run: cargo test --workspace --all-targets

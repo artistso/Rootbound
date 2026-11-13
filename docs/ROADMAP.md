@@ -8,7 +8,7 @@ criteria.
 | --- | --- | --- | --- |
 | M0 | Grid, heightmap, camera, and one placeable tile | Complete | — |
 | M1 | Connectivity, classification, modules, and zero-latency placement | Complete | — |
-| M2 | Visible pressure propagation | Next | [#1](https://github.com/artistso/Rootbound/issues/1) |
+| M2 | Visible pressure propagation | Next (core implemented in the Rust engine — see [ENGINE.md](ENGINE.md)) | [#1](https://github.com/artistso/Rootbound/issues/1) |
 | M3 | Threats spawned from pressure peaks | Planned | [#2](https://github.com/artistso/Rootbound/issues/2) |
 | M4 | Modules harvest, defend, and attract | Planned | [#3](https://github.com/artistso/Rootbound/issues/3) |
 | M5 | Organic resource display | Planned | [#4](https://github.com/artistso/Rootbound/issues/4) |

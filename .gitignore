@@ -1,6 +1,7 @@
 node_modules/
 dist/
 coverage/
+engine/target/
 rootbound.zip
 
 .env

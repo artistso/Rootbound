@@ -81,7 +81,7 @@ stable toolchain (run 43443964896, commits `4afd514`..`9d3e53a`). The same
 job runs on every PR and on pushes to `main`, so regressions gate the same
 way the TypeScript `check` job does. A third job, `wasm`, builds
 `rootbound-wasm` to `wasm32-unknown-unknown`, generates JS bindings with the
-pinned `wasm-bindgen` CLI, and runs `rootbound-wasm/smoke.mjs` under node —
+pinned `wasm-bindgen` CLI, and runs `rootbound-wasm/smoke.cjs` under node —
 placement validation, connectivity-driven module emergence, pressure, and
 threat peaks, end to end.
 
@@ -113,7 +113,7 @@ engine/
 └── rootbound-wasm/             # JS-callable bindings (wasm-bindgen), the web bridge
     ├── Cargo.toml              # cdylib; wasm-bindgen pinned exactly
     ├── src/lib.rs              # Engine: place_tile / tile_count / darkness_at / …
-    └── smoke.mjs               # node end-to-end assertions, run in CI after wasm-bindgen
+    └── smoke.cjs               # node end-to-end assertions, run in CI after wasm-bindgen
 ```
 
 ### Port fidelity notes (intentional divergences from TypeScript)
@@ -169,7 +169,7 @@ cargo build --release --target wasm32-unknown-unknown -p rootbound-wasm
 cargo install wasm-bindgen-cli --locked --version "=0.2.100"
 wasm-bindgen --target nodejs --out-dir rootbound-wasm/pkg \
   target/wasm32-unknown-unknown/release/rootbound_wasm.wasm
-node rootbound-wasm/smoke.mjs
+node rootbound-wasm/smoke.cjs
 ```
 
 **Not wired into the web game yet.** The Phaser build remains all-TypeScript;

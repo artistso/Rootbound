@@ -19,7 +19,7 @@
 //! cargo build --release --target wasm32-unknown-unknown -p rootbound-wasm
 //! wasm-bindgen --target nodejs --out-dir rootbound-wasm/pkg \
 //!   target/wasm32-unknown-unknown/release/rootbound_wasm.wasm
-//! node rootbound-wasm/smoke.mjs
+//! node rootbound-wasm/smoke.cjs
 //! ```
 
 use rootbound_core::ecs::World;

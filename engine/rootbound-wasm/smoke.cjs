@@ -2,8 +2,12 @@
 // ./pkg (see docs/ENGINE.md). Asserts the full placement pipeline end to end:
 // placement validation, connectivity-driven module emergence, pressure, and
 // threat-peak detection.
-import assert from 'node:assert/strict';
-import { Engine } from './pkg/rootbound_wasm.js';
+//
+// Written as CommonJS on purpose: `--target nodejs` emits CommonJS, and a
+// static `import` of it relies on cjs-module-lexer heuristics that don't
+// recognize wasm-bindgen's export shape. require() always works.
+const assert = require('node:assert/strict');
+const { Engine } = require('./pkg/rootbound_wasm.js');
 
 const engine = new Engine();
 assert.equal(engine.world_size(), 512);

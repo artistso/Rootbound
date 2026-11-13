@@ -24,3 +24,64 @@ jobs:
         run: npm ci
       - name: Check types, tests, and production build
         run: npm run check
+
+  engine:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Test Rust engine
+        # ubuntu-latest runners ship a stable Rust toolchain; the engine is
+        # zero-dependency, so no install or cache step is needed.
+        run: cargo test --workspace --all-targets
+
+  wasm:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Build WASM and run smoke test
+        # Builds rootbound-wasm to wasm32, generates JS bindings with the
+        # wasm-bindgen CLI (pinned to the crate version), and executes a node
+        # smoke test that places tiles through the real pipeline — placement,
+        # connectivity, module classification, pressure, threat peaks.
+        # On failure, surfaces errors as workflow annotations.
+        run: |
+          set +e
+          {
+            rustup target add wasm32-unknown-unknown
+            cargo build --release --target wasm32-unknown-unknown -p rootbound-wasm
+            cargo install wasm-bindgen-cli --locked --version "=0.2.100"
+            wasm-bindgen --target nodejs --out-dir rootbound-wasm/pkg target/wasm32-unknown-unknown/release/rootbound_wasm.wasm
+            # The repo root package.json is "type": "module"; without this
+            # marker Node would parse the CommonJS bindings as ESM.
+            printf '{"type":"commonjs"}\n' > rootbound-wasm/pkg/package.json
+            node rootbound-wasm/smoke.cjs
+          } > /tmp/wasm.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            echo "wasm pipeline failed ($code); annotating errors"
+            grep -E "^(error|[a-z_]+: )" /tmp/wasm.log | head -12 | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+            tail -12 /tmp/wasm.log | while IFS= read -r line; do
+              echo "::error::$line"
+            done
+            if [ -d rootbound-wasm/pkg ]; then
+              ls rootbound-wasm/pkg | head -10 | while IFS= read -r line; do
+                echo "::error::pkg: $line"
+              done
+              tail -5 rootbound-wasm/pkg/rootbound_wasm.js | while IFS= read -r line; do
+                echo "::error::js: $line"
+              done
+            fi
+            exit $code
+          fi
+          echo "wasm pipeline ok"
+          tail -2 /tmp/wasm.log

@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = ["rootbound-core", "rootbound-wasm"]
+
+[workspace.package]
+edition = "2021"
+repository = "https://github.com/artistso/Rootbound"

@@ -169,6 +169,8 @@ cargo build --release --target wasm32-unknown-unknown -p rootbound-wasm
 cargo install wasm-bindgen-cli --locked --version "=0.2.100"
 wasm-bindgen --target nodejs --out-dir rootbound-wasm/pkg \
   target/wasm32-unknown-unknown/release/rootbound_wasm.wasm
+# the repo root package.json is "type": "module"; the bindings are CommonJS
+printf '{"type":"commonjs"}\n' > rootbound-wasm/pkg/package.json
 node rootbound-wasm/smoke.cjs
 ```
 

@@ -66,16 +66,17 @@ impedes correctness (e.g. `serde` once a save/interchange format lands,
 gets a frontend), and (b) be verifiable against crates.io at the time it is
 added, pinned in `Cargo.lock`, and justified in this document.
 
-## Verification status — read this before trusting it
+## Verification status
 
-The machine that produced this code **had no Rust toolchain and no crates.io
-access** (no `cargo`/`rustc`; apt and rustup are unreachable from the sandbox).
-The code was written carefully, parsed with a Tree-sitter Rust grammar (all 15
-files clean), and reviewed by hand, but **`cargo test` has not been run
-locally**. The `engine` CI job added to `.github/workflows/ci.yml` runs
-`cargo test --workspace --all-targets` on GitHub's runners, which do have
-Rust preinstalled. Treat the first green (or red) CI run as the real build
-gate, and expect to fix small nits there.
+The machine that wrote this code had no Rust toolchain and no crates.io
+access, so the crate was not compiled locally. It was developed against
+GitHub Actions instead: the first CI run caught two compile errors, the
+second caught one test bug (a missing `union` before asserting component
+membership), and the branch is now **green on both jobs** — `cargo test
+--workspace --all-targets` passes on `ubuntu-latest` with the runner's
+stable toolchain (run 43443964896, commits `4afd514`..`9d3e53a`). The same
+job runs on every PR and on pushes to `main`, so regressions gate the same
+way the TypeScript `check` job does.
 
 Local workflow once you have a toolchain:
 
